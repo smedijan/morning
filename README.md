@@ -1,6 +1,17 @@
 # Morning
 
-A Go project.
+`morning` runs `.sh` and `.ps1` scripts directly inside `$XDG_CONFIG_HOME/morning.d` in alphanumeric filename order. Shell scripts are sourced with `sh`; PowerShell scripts are dot-sourced with `pwsh` (or `powershell` if `pwsh` is unavailable). Consecutive scripts using the same shell share shell state. A missing scripts directory is treated as an empty list; a script failure stops the run. Install the relevant interpreter for the script types you use.
+
+When `XDG_CONFIG_HOME` is unset or empty, Morning uses `~/.config/morning.d`.
+
+```sh
+mkdir -p ~/.config/morning.d
+cat > ~/.config/morning.d/10-update.sh <<'EOF'
+# Runs as part of `morning`
+echo "Good morning"
+EOF
+morning
+```
 
 ## Development
 
