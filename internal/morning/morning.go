@@ -24,10 +24,26 @@ func Discover(dir string) ([]string, error) {
 	files := make([]string, 0, len(entries))
 	for _, entry := range entries {
 		extension := strings.ToLower(filepath.Ext(entry.Name()))
-		if entry.Name()[0] == '.' || !entry.Type().IsRegular() || (extension != ".sh" && extension != ".ps1") {
+		if entry.Name()[0] == '.' || (extension != ".sh" && extension != ".ps1") {
 			continue
 		}
-		files = append(files, filepath.Join(dir, entry.Name()))
+
+		path := filepath.Join(dir, entry.Name())
+		if entry.Type()&os.ModeSymlink != 0 {
+			info, err := os.Stat(path)
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			if err != nil {
+				return nil, fmt.Errorf("stat morning script %q: %w", path, err)
+			}
+			if !info.Mode().IsRegular() {
+				continue
+			}
+		} else if !entry.Type().IsRegular() {
+			continue
+		}
+		files = append(files, path)
 	}
 	sort.Strings(files)
 	return files, nil

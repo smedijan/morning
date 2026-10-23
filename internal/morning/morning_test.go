@@ -31,6 +31,32 @@ func TestDiscover(t *testing.T) {
 	}
 }
 
+func TestDiscoverFollowsSymlinksToRegularFiles(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(t.TempDir(), "target")
+	if err := os.WriteFile(target, []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "10-linked.sh")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	if err := os.Symlink(t.TempDir(), filepath.Join(dir, "20-directory.sh")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join(dir, "missing"), filepath.Join(dir, "30-broken.sh")); err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := Discover(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 1 || files[0] != link {
+		t.Fatalf("Discover() = %v, want [%s]", files, link)
+	}
+}
+
 func TestDiscoverMissingDirectory(t *testing.T) {
 	files, err := Discover(filepath.Join(t.TempDir(), "missing"))
 	if err != nil || len(files) != 0 {
